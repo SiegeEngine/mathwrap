@@ -1,14 +1,15 @@
 use FullFloat;
 use cgmath::{Deg, Rad};
 use num_traits::{Bounded, NumCast, One, Zero};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign,
-               Sub, SubAssign};
 use std::iter::Sum;
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign};
 
 /// An angle.
 ///
 /// When interoperating with numbers, functions are explicit
 /// about the units of those numbers (radians, degrees or cycles).
+///
+/// This type is marked as `#[repr(C)]`.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialOrd, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -22,11 +23,13 @@ impl<F: FullFloat> Angle<F> {
     }
 
     /// Create an angle from radians
+    #[inline]
     pub fn from_radians(radians: F) -> Angle<F> {
         Angle(radians)
     }
 
     /// Get the value of the angle as radians
+    #[inline]
     pub fn as_radians(&self) -> F {
         self.0
     }
@@ -38,12 +41,14 @@ impl<F: FullFloat> Angle<F> {
     }
 
     /// Create an angle from degrees
+    #[inline]
     pub fn from_degrees(degrees: F) -> Angle<F> {
         let one_eighty: F = NumCast::from(180.0_f64).unwrap();
         Angle(F::PI() * degrees / one_eighty)
     }
 
     /// Get the value of the angle as degrees
+    #[inline]
     pub fn as_degrees(&self) -> F {
         let one_eighty: F = NumCast::from(180.0_f64).unwrap();
         self.0 * one_eighty / F::PI()
@@ -56,27 +61,36 @@ impl<F: FullFloat> Angle<F> {
     }
 
     /// Create an angle from cycles (1 cycle is a full circle)
+    #[inline]
     pub fn from_cycles(cycles: F) -> Angle<F> {
         let two: F = NumCast::from(2.0_f64).unwrap();
         Angle(two * F::PI() * cycles)
     }
 
     /// Get the value of the angle as number of cycles (full circles)
+    #[inline]
     pub fn as_cycles(&self) -> F {
         let two: F = NumCast::from(2.0_f64).unwrap();
         self.0 / (two * F::PI())
     }
 
-    /// This normalizes to the radian range -PI to PI (half cycle each way)
+    /// This normalizes to the radian range [-PI to PI) (half cycle each way)
+    #[inline]
     pub fn normalize_around_zero(&mut self) {
         let two: F = NumCast::from(2.0_f64).unwrap();
-        self.0 = self.0 % (two * F::PI()) - F::PI();
+        let twopi: F = two * F::PI();
+        self.0 = (self.0 % twopi + twopi) % twopi;
+        if self.0 >= F::PI() {
+            self.0 -= twopi;
+        }
     }
 
-    /// This normalizes to the radian range 0 to 2*PI (full circle, positive)
+    /// This normalizes to the radian range [0 to 2*PI) (full circle, positive)
+    #[inline]
     pub fn normalize_as_positive(&mut self) {
         let two: F = NumCast::from(2.0_f64).unwrap();
-        self.0 = self.0 % (two * F::PI());
+        let twopi: F = two * F::PI();
+        self.0 = (self.0 % twopi + twopi) % twopi;
     }
 }
 
@@ -179,7 +193,9 @@ impl<F: FullFloat> Bounded for Angle<F> {
 impl<F: FullFloat> Sum<Angle<F>> for Angle<F> {
     #[inline]
     fn sum<I>(iter: I) -> Angle<F>
-    where I: Iterator<Item = Angle<F>> {
+    where
+        I: Iterator<Item = Angle<F>>,
+    {
         iter.fold(Angle::zero(), Add::add)
     }
 }
@@ -197,6 +213,12 @@ impl<F> Into<Rad<F>> for Angle<F> {
         Rad(self.0)
     }
 }
+/*impl<F> From<Angle<F>> for Rad<F> {
+    #[inline]
+    fn from(angle: Angle<F>) -> Rad<F> {
+        Rad(angle.0)
+    }
+}*/
 
 impl<F> From<Deg<F>> for Angle<F>
 where
@@ -221,9 +243,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use float_cmp::ApproxEq;
     use std::f32::EPSILON;
     use std::f32::consts::PI;
-    use float_cmp::ApproxEq;
 
     #[test]
     fn test_radians() {
@@ -257,11 +279,31 @@ mod tests {
     }
 
     #[test]
-    fn test_assignops_autoimpl() {
+    fn test_assignops() {
         let full = Angle::from_cycles(1.0);
         let mut h1 = Angle::from_radians(PI);
         let h2 = Angle::from_degrees(180.0);
         h1 += h2;
         assert!(h1.approx_eq(&full, 2.0 * EPSILON, 2));
+    }
+
+    #[test]
+    fn test_cgmath_conversion() {
+        let x: Angle<f32> = Angle::from_radians(PI);
+        let r: ::cgmath::Rad<f32> = x.into();
+        let y: Angle<f32> = From::from(r);
+        assert_eq!(x, y);
+    }
+
+    #[test]
+    fn test_normalize() {
+        let mut x: Angle<f32> = Angle::from_degrees(-10.0);
+        x.normalize_as_positive();
+        println!("{:?}", x);
+        assert!(x.approx_eq(&Angle::from_degrees(350.0), 2.0 * EPSILON, 2));
+
+        let mut x: Angle<f32> = Angle::from_radians(2.0 * PI);
+        x.normalize_around_zero();
+        assert!(x.approx_eq(&Angle::zero(), 2.0 * EPSILON, 2));
     }
 }

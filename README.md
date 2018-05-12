@@ -19,3 +19,7 @@ We attempt to eventually provide a superset of the features.  Additional feature
 not present in the aforementioned crates are implemented, as were required to
 support the [Siege Engine](https://github.com/SiegeEngine) and in replacing
 [siege-math](https://github.com/SiegeEngine/siege-math).
+
+To convert foreign types into our types, use either the `From` or `Into` trait.
+To convert back to the foreign type you must use the `Into` trait due to
+limitations in the Rust language.
