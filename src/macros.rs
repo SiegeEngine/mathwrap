@@ -32,3 +32,23 @@ macro_rules! impl_uop {
         }
     };
 }
+
+macro_rules! impl_aop {
+    ($Op:ident, $op:ident, $T:ty, $Tx:expr) => {
+        impl<F: FullFloat> $Op for $T {
+            fn $op(&mut self, rhs: $T) {
+                (self.0).$op(rhs.0)
+            }
+        }
+    };
+}
+
+macro_rules! impl_aop_f {
+    ($Op:ident, $op:ident, $T:ty, $Tx:expr) => {
+        impl<F: FullFloat> $Op<F> for $T {
+            fn $op(&mut self, rhs: F) {
+                (self.0).$op(rhs)
+            }
+        }
+    };
+}

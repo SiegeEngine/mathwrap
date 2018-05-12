@@ -1,7 +1,9 @@
 use FullFloat;
 use cgmath::{Deg, Rad};
-use num_traits::{NumCast, One, Zero};
-use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
+use num_traits::{Bounded, NumCast, One, Zero};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign,
+               Sub, SubAssign};
+use std::iter::Sum;
 
 /// An angle.
 ///
@@ -84,24 +86,37 @@ impl_op!(Mul, mul, Angle<F>, Angle);
 impl_op!(Div, div, Angle<F>, Angle);
 impl_op!(Rem, rem, Angle<F>, Angle);
 
+impl_aop!(AddAssign, add_assign, Angle<F>, Angle);
+impl_aop!(SubAssign, sub_assign, Angle<F>, Angle);
+impl_aop!(MulAssign, mul_assign, Angle<F>, Angle);
+impl_aop!(DivAssign, div_assign, Angle<F>, Angle);
+impl_aop!(RemAssign, rem_assign, Angle<F>, Angle);
+
 impl_op_f!(Mul, mul, Angle<F>, Angle);
 impl_op_f!(Div, div, Angle<F>, Angle);
+
+impl_aop_f!(MulAssign, mul_assign, Angle<F>, Angle);
+impl_aop_f!(DivAssign, div_assign, Angle<F>, Angle);
 
 impl_uop!(Neg, neg, Angle<F>, Angle);
 
 impl<F: FullFloat> Zero for Angle<F> {
+    #[inline]
     fn zero() -> Angle<F> {
         Angle(F::zero())
     }
+    #[inline]
     fn is_zero(&self) -> bool {
         self.0.is_zero()
     }
 }
 
 impl<F: FullFloat> One for Angle<F> {
+    #[inline]
     fn one() -> Angle<F> {
         Angle(F::one())
     }
+    #[inline]
     fn is_one(&self) -> bool {
         self.0.is_one()
     }
@@ -110,22 +125,27 @@ impl<F: FullFloat> One for Angle<F> {
 impl<F: ::approx::ApproxEq> ::approx::ApproxEq for Angle<F> {
     type Epsilon = F::Epsilon;
 
+    #[inline]
     fn default_epsilon() -> F::Epsilon {
         F::default_epsilon()
     }
 
+    #[inline]
     fn default_max_relative() -> F::Epsilon {
         F::default_max_relative()
     }
 
+    #[inline]
     fn default_max_ulps() -> u32 {
         F::default_max_ulps()
     }
 
+    #[inline]
     fn relative_eq(&self, other: &Self, epsilon: F::Epsilon, max_relative: F::Epsilon) -> bool {
         F::relative_eq(&self.0, &other.0, epsilon, max_relative)
     }
 
+    #[inline]
     fn ulps_eq(&self, other: &Self, epsilon: F::Epsilon, max_ulps: u32) -> bool {
         F::ulps_eq(&self.0, &other.0, epsilon, max_ulps)
     }
@@ -134,6 +154,7 @@ impl<F: ::approx::ApproxEq> ::approx::ApproxEq for Angle<F> {
 impl<F: ::float_cmp::ApproxEq<Flt = F> + ::float_cmp::Ulps> ::float_cmp::ApproxEq for Angle<F> {
     type Flt = F;
 
+    #[inline]
     fn approx_eq(
         &self,
         other: &Self,
@@ -141,6 +162,25 @@ impl<F: ::float_cmp::ApproxEq<Flt = F> + ::float_cmp::Ulps> ::float_cmp::ApproxE
         ulps: <Self::Flt as ::float_cmp::Ulps>::U,
     ) -> bool {
         self.0.approx_eq(&other.0, epsilon, ulps)
+    }
+}
+
+impl<F: FullFloat> Bounded for Angle<F> {
+    #[inline]
+    fn min_value() -> Angle<F> {
+        Angle(F::min_value())
+    }
+    #[inline]
+    fn max_value() -> Angle<F> {
+        Angle(F::max_value())
+    }
+}
+
+impl<F: FullFloat> Sum<Angle<F>> for Angle<F> {
+    #[inline]
+    fn sum<I>(iter: I) -> Angle<F>
+    where I: Iterator<Item = Angle<F>> {
+        iter.fold(Angle::zero(), Add::add)
     }
 }
 
@@ -181,6 +221,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::f32::EPSILON;
+    use std::f32::consts::PI;
+    use float_cmp::ApproxEq;
 
     #[test]
     fn test_radians() {
@@ -205,15 +248,20 @@ mod tests {
 
     #[test]
     fn test_relations() {
-        use std::f32::EPSILON;
-        use std::f32::consts::PI;
-        use float_cmp::ApproxEq;
-
         let h1 = Angle::from_radians(PI);
         let h2 = Angle::from_degrees(180.0);
         let h3 = Angle::from_cycles(0.5);
         assert!(h1.approx_eq(&h2, 2.0 * EPSILON, 2));
         assert!(h1.approx_eq(&h3, 2.0 * EPSILON, 2));
         assert!(h2.approx_eq(&h3, 2.0 * EPSILON, 2));
+    }
+
+    #[test]
+    fn test_assignops_autoimpl() {
+        let full = Angle::from_cycles(1.0);
+        let mut h1 = Angle::from_radians(PI);
+        let h2 = Angle::from_degrees(180.0);
+        h1 += h2;
+        assert!(h1.approx_eq(&full, 2.0 * EPSILON, 2));
     }
 }
