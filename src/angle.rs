@@ -1,5 +1,7 @@
 use FullFloat;
+use approx::ApproxEq as AApproxEq;
 use cgmath::{Deg, Rad};
+use float_cmp::{ApproxEq as FApproxEq, Ulps};
 use num_traits::{NumCast, One, Zero};
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 
@@ -160,6 +162,38 @@ impl<F: FullFloat> One for Angle<F> {
     }
 }
 
+impl<F: AApproxEq> AApproxEq for Angle<F> {
+    type Epsilon = F::Epsilon;
+
+    fn default_epsilon() -> F::Epsilon {
+        F::default_epsilon()
+    }
+
+    fn default_max_relative() -> F::Epsilon {
+        F::default_max_relative()
+    }
+
+    fn default_max_ulps() -> u32 {
+        F::default_max_ulps()
+    }
+
+    fn relative_eq(&self, other: &Self, epsilon: F::Epsilon, max_relative: F::Epsilon) -> bool {
+        F::relative_eq(&self.0, &other.0, epsilon, max_relative)
+    }
+
+    fn ulps_eq(&self, other: &Self, epsilon: F::Epsilon, max_ulps: u32) -> bool {
+        F::ulps_eq(&self.0, &other.0, epsilon, max_ulps)
+    }
+}
+
+impl<F: FApproxEq<Flt = F> + Ulps> FApproxEq for Angle<F> {
+    type Flt = F;
+
+    fn approx_eq(&self, other: &Self, epsilon: Self::Flt, ulps: <Self::Flt as Ulps>::U) -> bool {
+        self.0.approx_eq(&other.0, epsilon, ulps)
+    }
+}
+
 impl<F> From<Rad<F>> for Angle<F> {
     #[inline]
     fn from(rad: Rad<F>) -> Angle<F> {
@@ -217,5 +251,19 @@ mod tests {
         let f: f32 = 1.234;
         let a = Angle::from_cycles(f);
         assert_eq!(a.as_cycles(), f);
+    }
+
+    #[test]
+    fn test_relations() {
+        use std::f32::EPSILON;
+        use std::f32::consts::PI;
+        use ::float_cmp::ApproxEq;
+
+        let h1 = Angle::from_radians(PI);
+        let h2 = Angle::from_degrees(180.0);
+        let h3 = Angle::from_cycles(0.5);
+        assert!(h1.approx_eq(&h2, 2.0 * EPSILON, 2));
+        assert!(h1.approx_eq(&h3, 2.0 * EPSILON, 2));
+        assert!(h2.approx_eq(&h3, 2.0 * EPSILON, 2));
     }
 }

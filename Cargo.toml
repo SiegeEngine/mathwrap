@@ -16,3 +16,5 @@ num-traits = "0.2"
 serde = { version = "1.0", features = ["serde_derive"], optional = true }
 cgmath = "0.16"
 nalgebra = "0.14"
+float-cmp = "0.4"
+approx = "0.1"
