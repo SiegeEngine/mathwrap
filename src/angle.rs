@@ -1,7 +1,7 @@
 use FullFloat;
 use cgmath::{Deg, Rad};
-use num_traits::{NumCast, Zero, One};
-use std::ops::{Add, Div, Mul, Sub, Rem, Neg};
+use num_traits::{NumCast, One, Zero};
+use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 
 /// An angle.
 ///
