@@ -1,7 +1,5 @@
 use FullFloat;
-use approx::ApproxEq as AApproxEq;
 use cgmath::{Deg, Rad};
-use float_cmp::{ApproxEq as FApproxEq, Ulps};
 use num_traits::{NumCast, One, Zero};
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 
@@ -162,7 +160,7 @@ impl<F: FullFloat> One for Angle<F> {
     }
 }
 
-impl<F: AApproxEq> AApproxEq for Angle<F> {
+impl<F: ::approx::ApproxEq> ::approx::ApproxEq for Angle<F> {
     type Epsilon = F::Epsilon;
 
     fn default_epsilon() -> F::Epsilon {
@@ -186,10 +184,15 @@ impl<F: AApproxEq> AApproxEq for Angle<F> {
     }
 }
 
-impl<F: FApproxEq<Flt = F> + Ulps> FApproxEq for Angle<F> {
+impl<F: ::float_cmp::ApproxEq<Flt = F> + ::float_cmp::Ulps> ::float_cmp::ApproxEq for Angle<F> {
     type Flt = F;
 
-    fn approx_eq(&self, other: &Self, epsilon: Self::Flt, ulps: <Self::Flt as Ulps>::U) -> bool {
+    fn approx_eq(
+        &self,
+        other: &Self,
+        epsilon: Self::Flt,
+        ulps: <Self::Flt as ::float_cmp::Ulps>::U,
+    ) -> bool {
         self.0.approx_eq(&other.0, epsilon, ulps)
     }
 }
