@@ -1,0 +1,17 @@
+[package]
+name = "mathwrap"
+version = "0.1.0"
+authors = ["Mike Dilger <mike@optcomp.nz>"]
+description = "A Math Library with a focus on Compatibility"
+readme = "README.md"
+keywords = [ "math", "cgmath", "nalgebra", "game" ]
+license = "MIT"
+
+[lib]
+name = "mathwrap"
+
+[dependencies]
+num-traits = "0.2"
+serde = { version = "1.0", features = ["serde_derive"], optional = true }
+cgmath = "0.16"
+nalgebra = "0.14"
