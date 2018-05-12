@@ -1,5 +1,7 @@
 extern crate num_traits;
 
+mod macros;
+
 mod angle;
 pub use self::angle::Angle;
 

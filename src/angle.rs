@@ -78,69 +78,16 @@ impl<F: FullFloat> Angle<F> {
     }
 }
 
-impl<F: FullFloat> Add<Angle<F>> for Angle<F> {
-    type Output = Angle<F>;
+impl_op!(Add, add, Angle<F>, Angle);
+impl_op!(Sub, sub, Angle<F>, Angle);
+impl_op!(Mul, mul, Angle<F>, Angle);
+impl_op!(Div, div, Angle<F>, Angle);
+impl_op!(Rem, rem, Angle<F>, Angle);
 
-    fn add(self, rhs: Angle<F>) -> Angle<F> {
-        Angle(self.0 + rhs.0)
-    }
-}
+impl_op_f!(Mul, mul, Angle<F>, Angle);
+impl_op_f!(Div, div, Angle<F>, Angle);
 
-impl<F: FullFloat> Sub<Angle<F>> for Angle<F> {
-    type Output = Angle<F>;
-
-    fn sub(self, rhs: Angle<F>) -> Angle<F> {
-        Angle(self.0 - rhs.0)
-    }
-}
-
-impl<F: FullFloat> Mul<Angle<F>> for Angle<F> {
-    type Output = Angle<F>;
-
-    fn mul(self, rhs: Angle<F>) -> Angle<F> {
-        Angle(self.0 * rhs.0)
-    }
-}
-
-impl<F: FullFloat> Div<Angle<F>> for Angle<F> {
-    type Output = Angle<F>;
-
-    fn div(self, rhs: Angle<F>) -> Angle<F> {
-        Angle(self.0 / rhs.0)
-    }
-}
-
-impl<F: FullFloat> Rem<Angle<F>> for Angle<F> {
-    type Output = Angle<F>;
-
-    fn rem(self, rhs: Angle<F>) -> Angle<F> {
-        Angle(self.0 % rhs.0)
-    }
-}
-
-impl<F: FullFloat> Mul<F> for Angle<F> {
-    type Output = Angle<F>;
-
-    fn mul(self, rhs: F) -> Angle<F> {
-        Angle(self.0 * rhs)
-    }
-}
-
-impl<F: FullFloat> Div<F> for Angle<F> {
-    type Output = Angle<F>;
-
-    fn div(self, rhs: F) -> Angle<F> {
-        Angle(self.0 / rhs)
-    }
-}
-
-impl<F: FullFloat> Neg for Angle<F> {
-    type Output = Angle<F>;
-
-    fn neg(self) -> Angle<F> {
-        Angle(-self.0)
-    }
-}
+impl_uop!(Neg, neg, Angle<F>, Angle);
 
 impl<F: FullFloat> Zero for Angle<F> {
     fn zero() -> Angle<F> {
@@ -260,7 +207,7 @@ mod tests {
     fn test_relations() {
         use std::f32::EPSILON;
         use std::f32::consts::PI;
-        use ::float_cmp::ApproxEq;
+        use float_cmp::ApproxEq;
 
         let h1 = Angle::from_radians(PI);
         let h2 = Angle::from_degrees(180.0);
